@@ -8,7 +8,7 @@ __pycache__/
 output/
 leads/leads_clean.json
 leads/skipped_leads.log
-leads/*.csv
+*.csv
 !leads/leads.csv
 
 # Packages
