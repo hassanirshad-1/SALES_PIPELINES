@@ -1,0 +1,21 @@
+# Environments
+.env
+.env.example
+__pycache__/
+*.pyc
+
+# Data & Outputs
+output/
+leads/leads_clean.json
+leads/skipped_leads.log
+leads/*.csv
+!leads/leads.csv
+
+# Packages
+node_modules/
+.venv/
+.pytest_cache/
+
+# System
+.DS_Store
+Thumbs.db

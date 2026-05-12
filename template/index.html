@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ company }} App</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+<div class="phone-wrapper">
+    <div class="phone-screen">
+        
+        <!-- DYNAMIC ISLAND -->
+        <div id="island" class="dynamic-island">
+            <div class="island-content">
+                <i class="fas fa-check-circle" style="color: var(--ios-success); margin-right: 10px;"></i>
+                <span id="island-text">Added to Cart</span>
+            </div>
+        </div>
+
+        <!-- PAYMENT SUCCESS SCREEN (HIDDEN) -->
+        <div id="success-screen">
+            <div class="check-circle">
+                <i class="fas fa-check"></i>
+            </div>
+            <h2 style="font-size: 2.2rem; margin-bottom: 10px; font-weight: 900; letter-spacing: -1.5px;">Success!</h2>
+            <p style="color: var(--ios-text-secondary); font-weight: 700;">Order confirmed at {{ company }}</p>
+            <button class="btn-ios" style="margin-top: 40px; width: 200px; background: #fff; color: #000;" onclick="closeSuccess()">Done</button>
+        </div>
+
+        <!-- SPLASH SCREEN -->
+        <div id="splash-screen" style="position: absolute; inset: 0; background: #000; z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.5s;">
+            <img src="{{ logo_url }}" alt="{{ company }}" style="width: 130px; height: 130px; border-radius: 30px; margin-bottom: 25px;" onerror="this.src='https://via.placeholder.com/200?text={{ company|urlencode }}'">
+            <div style="font-weight: 900; font-size: 2.2rem; letter-spacing: -2px;">{{ company }}</div>
+            <div style="margin-top: 20px; color: #444;">
+                <i class="fas fa-circle-notch fa-spin"></i>
+            </div>
+        </div>
+
+        <!-- STATUS BAR -->
+        <div class="status-bar">
+            <span id="clock">9:41</span>
+            <div style="display: flex; gap: 8px;">
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi"></i>
+                <i class="fas fa-battery-full"></i>
+            </div>
+        </div>
+
+        <!-- MAIN APP CONTENT -->
+        <div class="app-container">
+            
+            <!-- HOME SCREEN -->
+            <div id="home" class="screen active">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 35px;">
+                    <div>
+                        <h2 id="greeting" style="font-size: 2rem; letter-spacing: -1.5px; font-weight: 900;">Good Morning, Hassan</h2>
+                        <p style="font-weight: 700; color: #6366f1; margin-top: 5px;">{{ company }} • {{ city }}</p>
+                    </div>
+                    <img src="{{ logo_url }}" style="width: 55px; height: 55px; border-radius: 18px; border: 1.5px solid var(--border); object-fit: cover;" onerror="this.src='https://ui-avatars.com/api/?name={{ company|urlencode }}&background=6366f1&color=fff&bold=true'">
+                </div>
+
+                <!-- STORIES -->
+                <div class="stories-row">
+                    <div class="story-circle">
+                        <div class="story-img-wrap"><img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=150&q=80" class="story-img"></div>
+                        <div class="story-name">New Brew</div>
+                    </div>
+                    <div class="story-circle">
+                        <div class="story-img-wrap"><img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=150&q=80" class="story-img"></div>
+                        <div class="story-name">Our Team</div>
+                    </div>
+                    <div class="story-circle">
+                        <div class="story-img-wrap" style="background: #27272a;"><img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=150&q=80" class="story-img"></div>
+                        <div class="story-name">Events</div>
+                    </div>
+                    <div class="story-circle">
+                        <div class="story-img-wrap" style="background: #27272a;"><img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=150&q=80" class="story-img"></div>
+                        <div class="story-name">Bakery</div>
+                    </div>
+                </div>
+
+                <div class="ios-card" style="background: linear-gradient(135deg, #121214 0%, #000 100%);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div>
+                            <p style="text-transform: uppercase; font-size: 0.75rem; font-weight: 900; color: #6366f1; margin-bottom: 5px;">Member Rewards</p>
+                            <h3 style="font-size: 1.5rem; font-weight: 900; letter-spacing: -0.5px;">Gold Status</h3>
+                        </div>
+                        <div style="background: rgba(99, 102, 241, 0.1); padding: 10px; border-radius: 12px; color: #6366f1; font-weight: 900;">80%</div>
+                    </div>
+                    <div style="height: 10px; background: #1c1c1e; border-radius: 5px; overflow: hidden;">
+                        <div style="width: 80%; height: 100%; background: var(--ios-accent); border-radius: 5px;"></div>
+                    </div>
+                    <p style="margin-top: 15px; font-size: 0.9rem; font-weight: 700;">2 more orders until your free brew!</p>
+                </div>
+
+                <h3 style="margin: 40px 0 20px; font-size: 1.5rem; font-weight: 900; letter-spacing: -1px;">Recommended for you</h3>
+                <div class="ios-card" style="display: flex; align-items: center; gap: 20px; padding: 20px;" onclick="switchTab('menu')">
+                    <div style="font-size: 2.5rem;">☕</div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 900; font-size: 1.2rem; letter-spacing: -0.5px;">Custom Latte</div>
+                        <div style="font-size: 0.9rem; color: var(--ios-text-secondary); font-weight: 600;">Oat Milk • Extra Hot</div>
+                    </div>
+                    <i class="fas fa-plus-circle" style="font-size: 1.6rem; color: #6366f1;"></i>
+                </div>
+            </div>
+
+            <!-- MENU SCREEN -->
+            <div id="menu" class="screen" style="display:none">
+                <h1 style="font-size: 2.8rem; font-weight: 900; letter-spacing: -2px; margin-bottom: 25px;">Order</h1>
+                <div class="ios-card" style="padding: 10px 24px;">
+                    <div class="menu-item" onclick="triggerIsland('Nitro Cold Brew')" style="display: flex; align-items: center; gap: 20px; padding: 22px 0; border-bottom: 1px solid var(--border);">
+                        <div style="font-size: 2rem;">🧊</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 900; font-size: 1.2rem;">Nitro Cold Brew</div>
+                            <div style="font-size: 0.85rem; color: var(--ios-text-secondary); font-weight: 700;">Velvety smooth selection</div>
+                        </div>
+                        <div style="font-weight: 900; font-size: 1.1rem;">$5.80</div>
+                    </div>
+                    <div class="menu-item" onclick="triggerIsland('Flat White')" style="display: flex; align-items: center; gap: 20px; padding: 22px 0; border-bottom: 1px solid var(--border);">
+                        <div style="font-size: 2rem;">☕</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 900; font-size: 1.2rem;">Flat White</div>
+                            <div style="font-size: 0.85rem; color: var(--ios-text-secondary); font-weight: 700;">Traditional double shot</div>
+                        </div>
+                        <div style="font-weight: 900; font-size: 1.1rem;">$4.50</div>
+                    </div>
+                    <div class="menu-item" onclick="triggerIsland('Avocado Toast')" style="display: flex; align-items: center; gap: 20px; padding: 22px 0;">
+                        <div style="font-size: 2rem;">🥑</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 900; font-size: 1.2rem;">Avocado Toast</div>
+                            <div style="font-size: 0.85rem; color: var(--ios-text-secondary); font-weight: 700;">Sourdough • Chili flakes</div>
+                        </div>
+                        <div style="font-weight: 900; font-size: 1.1rem;">$12.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CART SCREEN -->
+            <div id="cart" class="screen" style="display:none">
+                <h1 style="font-size: 2.8rem; font-weight: 900; letter-spacing: -2px; margin-bottom: 25px;">Bag</h1>
+                <div id="cart-content" style="text-align: center; padding: 80px 0;">
+                    <div style="width: 110px; height: 110px; background: #121214; border-radius: 35px; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px; border: 1px solid var(--border);">
+                        <i class="fas fa-shopping-bag" style="font-size: 3.5rem; color: #27272a;"></i>
+                    </div>
+                    <p style="color: var(--ios-text-secondary); font-weight: 900; font-size: 1.3rem; margin-bottom: 40px;">Your bag is empty</p>
+                    <button class="btn-ios" onclick="switchTab('menu')">Explore Menu</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TAB BAR -->
+        <div class="tab-bar">
+            <div class="tab-item active" onclick="switchTab('home')">
+                <i class="fas fa-house-chimney"></i>
+                <span>Home</span>
+            </div>
+            <div class="tab-item" onclick="switchTab('menu')">
+                <i class="fas fa-coffee"></i>
+                <span>Menu</span>
+            </div>
+            <div class="tab-item" onclick="switchTab('cart')">
+                <i class="fas fa-bag-shopping"></i>
+                <span>Bag</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CLAIM OVERLAY -->
+    <div class="claim-overlay">
+        <a href="{{ claim_url }}" class="claim-btn">Deploy this App for {{ company }}</a>
+    </div>
+</div>
+
+<script>
+    // Clock & Greeting
+    function updateHeader() {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+        
+        const hour = now.getHours();
+        let greet = "Good Evening";
+        if (hour < 12) greet = "Good Morning";
+        else if (hour < 18) greet = "Good Afternoon";
+        document.getElementById('greeting').innerText = greet + ", Hassan";
+    }
+    updateHeader();
+    setInterval(updateHeader, 1000);
+
+    // Splash
+    setTimeout(() => {
+        document.getElementById('splash-screen').style.opacity = '0';
+        setTimeout(() => { document.getElementById('splash-screen').style.display = 'none'; }, 500);
+    }, 2000);
+
+    // Navigation
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+        const tabMap = {'home':0, 'menu':1, 'cart':2};
+        document.querySelectorAll('.tab-item')[tabMap[tabId]].classList.add('active');
+
+        document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+        document.getElementById(tabId).style.display = 'block';
+    }
+
+    // Interaction
+    function triggerIsland(item) {
+        const island = document.getElementById('island');
+        const text = document.getElementById('island-text');
+        text.innerText = item + ' added';
+        island.classList.add('active');
+        
+        document.getElementById('cart-content').innerHTML = `
+            <div class="ios-card" style="text-align: left; display: flex; align-items: center; gap: 20px; border-left: 4px solid #6366f1;">
+                <div style="font-size: 2.2rem;">☕</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 900; font-size: 1.2rem;">${item}</div>
+                    <div style="font-size: 0.9rem; color: var(--ios-text-secondary); font-weight: 700;">Ready in 8 mins</div>
+                </div>
+                <div style="font-weight: 900; font-size: 1.1rem;">$5.80</div>
+            </div>
+            <button class="btn-ios" style="margin-top: 30px; background: #fff; color: #000;" onclick="triggerPayment()">Buy with Apple Pay</button>
+        `;
+        setTimeout(() => { island.classList.remove('active'); }, 3000);
+    }
+
+    function triggerPayment() {
+        const island = document.getElementById('island');
+        const text = document.getElementById('island-text');
+        text.innerHTML = '<i class="fas fa-face-smile" style="color: #6366f1;"></i> Processing...';
+        island.classList.add('active');
+        
+        setTimeout(() => {
+            island.classList.remove('active');
+            document.getElementById('success-screen').style.display = 'flex';
+        }, 1500);
+    }
+
+    function closeSuccess() {
+        document.getElementById('success-screen').style.display = 'none';
+        switchTab('home');
+    }
+</script>
+
+</body>
+</html>
