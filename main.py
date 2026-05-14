@@ -56,24 +56,38 @@ async def _run(args: argparse.Namespace) -> None:
         lead = normalize_input_row(raw)
         business_name = (lead.get("business_name") or "").strip() or f"Row {idx + 1}"
 
-        print(f"\n[{idx + 1}/{len(df)}] Researching: {business_name}")
+        print(f"\n{'='*60}")
+        print(f"[{idx + 1}/{len(df)}] 🔍 Researching: {business_name}")
+        print(f"{'='*60}")
 
         try:
             result = await research_lead_row(lead)
             
-            # RUN DEMO AGENT
+            # Prepare agent JSON for downstream agents
             agent_json = result.get("_raw_agent_json", {})
+            
+            # CRITICAL: Ensure business_name is ALWAYS in agent_json
+            # Downstream agents (demo + outreach) need this to personalize output
+            agent_json["business_name"] = business_name
+            
             demo_path = ""
             email_copy = ""
-            sheet = _spreadsheet_row(result) # generate sheet early to get the real business name
-            sheet["Business Name"] = business_name # Explicitly set the business name!
+            sheet = _spreadsheet_row(result)
+            sheet["Business Name"] = business_name
             
             if agent_json.get("research_status") != "Failed":
+                # RUN DEMO AGENT
+                print(f"\n  📱 Building demo for {business_name}...")
                 demo_path = await build_demo_for_lead(business_name, agent_json)
+                
+                # RUN OUTREACH AGENT
+                print(f"\n  ✉️  Writing outreach for {business_name}...")
                 email_copy = await write_outreach_email(agent_json, demo_path)
+            else:
+                print(f"  ⚠️  Research failed — skipping demo & outreach")
             
-            sheet["Demo URL"] = demo_path  # Inject the demo path into the CSV
-            sheet["Outreach Message"] = email_copy # Inject the email copy into the CSV
+            sheet["Demo URL"] = demo_path
+            sheet["Outreach Message"] = email_copy
             
             rows_for_sheet.append(sheet)
             bundle.append(
@@ -84,8 +98,11 @@ async def _run(args: argparse.Namespace) -> None:
                     "maps_scrape": result.get("_maps_json"),
                 }
             )
+            
+            print(f"\n  ✅ {business_name} complete | Status: {sheet.get('Research Status', 'Unknown')}")
+            
         except Exception as e:
-            print(f"[FAIL] {business_name}: {e}")
+            print(f"\n  ❌ [FAIL] {business_name}: {e}")
             fail = _empty_failed_row(business_name)
             rows_for_sheet.append(fail)
             bundle.append(
