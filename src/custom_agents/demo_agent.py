@@ -24,15 +24,20 @@ ABSOLUTE NON-NEGOTIABLES:
 
 1. OUTPUT FORMAT: Return ONLY raw HTML code. Start IMMEDIATELY with <!DOCTYPE html>. No markdown. No explanation. No ```html fences.
 
-2. iOS NATIVE LOOK: The design MUST look exactly like a real iOS app, NOT a website:
-   - Centered mobile container: max-width 430px, min-height 100vh, relative overflow-hidden
-   - iOS status bar at top (9:41, signal/wifi/battery icons)
-   - Fixed bottom navigation bar with 4 tabs (Home, Order, Rewards, Profile) using FontAwesome icons
-   - Apple-style design language: rounded-3xl corners, large bold SF-style typography, subtle shadows
+2. iOS DEVICE FRAME (CRITICAL): The entire app MUST be contained within a realistic iOS device mockup:
+   - Outer Frame: A sleek, rounded-5xl black border (approx 8px) with a subtle shadow.
+   - Notch/Dynamic Island: A small centered black pill at the top for the camera.
+   - Dimensions: fixed width (approx 390px) and fixed height (approx 800px).
+   - Centering: The device itself should be centered on the browser page (bg-slate-200).
+   - Internal Scroll: The app screens should be scrollable *inside* the phone frame (overflow-y-auto), but the phone frame itself stays fixed.
 
-3. TAILWIND CSS via CDN: <script src="https://cdn.tailwindcss.com"></script>
-4. FONTAWESOME CDN: <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-5. GOOGLE FONTS: Import Inter font for premium typography.
+3. iOS NATIVE UI:
+   - iOS status bar (9:41, wifi/battery) at the top.
+   - Fixed bottom navigation bar with 4 tabs (Home, Order, Rewards, Profile).
+   - Apple-style design: rounded-3xl corners, SF-style bold typography, bg-gray-50.
+
+4. TAILWIND CSS via CDN: <script src="https://cdn.tailwindcss.com"></script>
+5. FONTAWESOME CDN: <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 ═══════════════════════════════════════════════════════════
 DESIGN LANGUAGE — Apple-Inspired Premium:
@@ -245,9 +250,22 @@ async def build_demo_for_lead(business_name: str, research_data: dict) -> str:
                 ),
             )
             
-            # Pass ALL research data in the user message
-            result = await Runner.run(agent, user_message)
-            html_content = _extract_html(result.final_output)
+            # Use the SDK's native streaming to prevent 504 timeouts
+            from openai.types.responses import ResponseTextDeltaEvent
+            
+            result = Runner.run_streamed(agent, input=user_message)
+            html_content = ""
+            
+            async for event in result.stream_events():
+                if event.type == "raw_response_event" and isinstance(event.data, ResponseTextDeltaEvent):
+                    delta = event.data.delta
+                    html_content += delta
+                    # Progress indicator
+                    if len(html_content) % 500 < len(delta):
+                        print(".", end="", flush=True)
+
+            print("\n")
+            html_content = _extract_html(html_content)
             
             # Validate quality
             if _validate_html(html_content, business_name):
