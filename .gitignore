@@ -1,21 +1,13 @@
-# Environments
 .env
-.env.example
+.venv/
 __pycache__/
 *.pyc
-
-# Data & Outputs
-output/
-leads/leads_clean.json
-leads/skipped_leads.log
-*.csv
-!leads/leads.csv
-
-# Packages
-node_modules/
-.venv/
-.pytest_cache/
-
-# System
-.DS_Store
-Thumbs.db
+data/research_results.json
+data/research_output.csv
+data/research_output.xlsx
+demos/*.html
+!demos/verve_coffee_roasters_demo.html
+!demos/nightjar_coffee_roasters_demo.html
+.netlify/
+.gemini/
+scratch/

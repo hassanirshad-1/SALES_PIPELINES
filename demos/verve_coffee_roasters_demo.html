@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verve Coffee Roasters - Ryan's Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ios-spring { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .ios-spring:active { transform: scale(0.96); }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+<!-- Mobile App Container -->
+<div class="w-full max-w-md h-[850px] bg-gray-50 relative overflow-hidden shadow-2xl rounded-[40px] border-8 border-gray-900">
+
+    <!-- Status Bar -->
+    <div class="absolute top-0 left-0 right-0 h-12 bg-gray-50 z-50 flex items-center justify-between px-6 pt-2">
+        <span class="text-sm font-semibold text-gray-900">9:41</span>
+        <div class="flex gap-1.5">
+            <i class="fas fa-signal text-xs text-gray-900"></i>
+            <i class="fas fa-wifi text-xs text-gray-900"></i>
+            <i class="fas fa-battery-full text-xs text-gray-900"></i>
+        </div>
+    </div>
+
+    <!-- App Content -->
+    <div class="h-full overflow-y-auto hide-scrollbar pb-24 pt-12" id="app-content">
+
+        <!-- Welcome Header -->
+        <div class="px-5 pt-4 pb-2">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">Welcome back,</p>
+                    <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Ryan O'Donovan</h1>
+                </div>
+                <div class="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                    RO
+                </div>
+            </div>
+        </div>
+
+        <!-- Location & Parking Alert -->
+        <div class="px-5 mt-4">
+            <div class="bg-gradient-to-r from-amber-600 to-amber-700 rounded-2xl p-4 text-white shadow-lg ios-spring cursor-pointer" onclick="showParkingModal()">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-parking text-lg"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-sm">1010 Fair Location</h3>
+                        <p class="text-xs text-amber-100 mt-0.5">Real-time parking spots: <span class="font-bold text-white">3 available</span></p>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span class="bg-white/20 px-2 py-1 rounded-lg text-xs font-medium">Street: Limited</span>
+                            <span class="bg-green-400/30 px-2 py-1 rounded-lg text-xs font-medium">Lot: Open</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-amber-200"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="px-5 mt-5">
+            <div class="grid grid-cols-2 gap-3">
+                <button class="bg-white rounded-2xl p-4 shadow-sm ios-spring text-left border border-gray-100" onclick="preOrder()">
+                    <div class="w-10 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-3">
+                        <i class="fas fa-bolt text-amber-600"></i>
+                    </div>
+                    <p class="font-bold text-sm text-gray-900">Skip the Line</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Pre-order now</p>
+                </button>
+                <button class="bg-white rounded-2xl p-4 shadow-sm ios-spring text-left border border-gray-100" onclick="reserveSeat()">
+                    <div class="w-10 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-3">
+                        <i class="fas fa-chair text-green-600"></i>
+                    </div>
+                    <p class="font-bold text-sm text-gray-900">Reserve Seat</p>
+                    <p class="text-xs text-gray-500 mt-0.5">8 spots open</p>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sugar-Free Highlight -->
+        <div class="px-5 mt-5">
+            <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-4 border border-emerald-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">NEW</span>
+                            <h3 class="font-bold text-sm text-gray-900">Sugar-Free Syrups</h3>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1">Vanilla, Caramel & Hazelnut — just like you asked!</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-3">
+                    <button class="flex-1 bg-emerald-600 text-white text-xs font-semibold py-2.5 rounded-xl ios-spring" onclick="trySugarFree()">
+                        Try Vanilla Decaf Latte
+                    </button>
+                    <button class="px-4 bg-white text-emerald-700 text-xs font-semibold py-2.5 rounded-xl border border-emerald-200 ios-spring">
+                        See All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Review Alert -->
+        <div class="px-5 mt-5">
+            <div class="bg-amber-50 rounded-2xl p-4 border border-amber-200">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 bg-amber-200 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-quote-left text-amber-700 text-xs"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-700 italic leading-relaxed">"Great drinks! 🍹 I just wished they had sugar-free syrups, even just vanilla like Shrine Coffee has."</p>
+                        <p class="text-[10px] text-amber-700 font-semibold mt-2">— Recent Review • <span class="text-emerald-600">✓ Now Available</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Favorites -->
+        <div class="px-5 mt-6">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="font-bold text-lg text-gray-900">What Customers Love</h2>
+                <button class="text-amber-600 text-xs font-semibold">View All</button>
+            </div>
+            <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+                <div class="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 min-w-[140px] ios-spring cursor-pointer">
+                    <div class="w-full h-24 bg-gradient-to-br from-amber-100 to-amber-200 rounded-xl flex items-center justify-center mb-2">
+                        <i class="fas fa-mug-hot text-3xl text-amber-700"></i>
+                    </div>
+                    <p class="font-bold text-sm text-gray-900">Decaf Latte</p>
+                    <p class="text-xs text-gray-500">Cozy favorite</p>
+                    <div class="flex items-center gap-1 mt-1">
+                        <i class="fas fa-star text-amber-400 text-[10px]"></i>
+                        <span class="text-[10px] text-gray-600">4.9</span>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 min-w-[140px] ios-spring cursor-pointer">
+                    <div class="w-full h-24 bg-gradient-to-br from-green-100 to-emerald-200 rounded-xl flex items-center justify-center mb-2">
+                        <i class="fas fa-leaf text-3xl text-emerald-700"></i>
+                    </div>
+                    <p class="font-bold text-sm text-gray-900">Plant Mocha</p>
+                    <p class="text-xs text-gray-500">Earthy & rich</p>
+                    <div class="flex items-center gap-1 mt-1">
+                        <i class="fas fa-star text-amber-400 text-[10px]"></i>
+                        <span class="text-[10px] text-gray-600">4.8</span>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 min-w-[140px] ios-spring cursor-pointer">
+                    <div class="w-full h-24 bg-gradient-to-br from-purple-100 to-pink-200 rounded-xl flex items-center justify-center mb-2">
+                        <i class="fas fa-moon text-3xl text-purple-700"></i>
+                    </div>
+                    <p class="font-bold text-sm text-gray-900">Late Night Brew</p>
+                    <p class="text-xs text-gray-500">Open 'til 10pm</p>
+                    <div class="flex items-center gap-1 mt-1">
+                        <i class="fas fa-star text-amber-400 text-[10px]"></i>
+                        <span class="text-[10px] text-gray-600">4.9</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Atmosphere Highlights -->
+        <div class="px-5 mt-5">
+            <h2 class="font-bold text-lg text-gray-900 mb-3">The Verve Experience</h2>
+            <div class="space-y-3">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-seedling text-green-600 text-lg"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-bold text-sm text-gray-900">Plants & Lighting</p>
+                        <p class="text-xs text-gray-500">Biophilic design for focus</p>
+                    </div>
+                    <span class="text-green-600 text-xs font-semibold bg-green-50 px-2 py-1 rounded-lg">Quiet Zone</span>
+                </div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-users text-blue-600 text-lg"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-bold text-sm text-gray-900">Friendly Staff</p>
+                        <p class="text-xs text-gray-500">Minimal distractions, max service</p>
+                    </div>
+                    <span class="text-blue-600 text-xs font-semibold bg-blue-50 px-2 py-1 rounded-lg">Training ✓</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loyalty Card -->
+        <div class="px-5 mt-5 mb-4">
+            <div class="bg-gray-900 rounded-2xl p-5 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500 rounded-full blur-3xl opacity-20"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-amber-400 text-xs font-semibold tracking-wider">VERVE REWARDS</p>
+                            <p class="font-bold text-lg mt-1">Ryan's Card</p>
+                        </div>
+                        <i class="fas fa-wifi text-amber-400 text-xl rotate-90"></i>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex justify-between text-xs text-gray-400 mb-2">
+                            <span>8/10 stamps</span>
+                            <span>Free drink next!</span>
+                        </div>
+                        <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-amber-400 to-amber-500 w-4/5 rounded-full"></div>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-gray-500 mt-3 font-mono">**** 8842</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 pb-6">
+        <div class="flex items-center justify-around">
+            <button class="flex flex-col items-center gap-1 text-amber-600" onclick="setActiveTab(this, 'home')">
+                <i class="fas fa-home text-xl"></i>
+                <span class="text-[10px] font-medium">Home</span>
+            </button>
+            <button class="flex flex-col items-center gap-1 text-gray-400" onclick="setActiveTab(this, 'order')">
+                <div class="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center -mt-6 shadow-lg shadow-amber-600/30">
+                    <i class="fas fa-coffee text-white text-lg"></i>
+                </div>
+                <span class="text-[10px] font-medium">Order</span>
+            </button>
+            <button class="flex flex-col items-center gap-1 text-gray-400" onclick="setActiveTab(this, 'rewards')">
+                <i class="fas fa-gift text-xl"></i>
+                <span class="text-[10px] font-medium">Rewards</span>
+            </button>
+            <button class="flex flex-col items-center gap-1 text-gray-400" onclick="setActiveTab(this, 'profile')">
+                <i class="fas fa-user text-xl"></i>
+                <span class="text-[10px] font-medium">Profile</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="absolute top-20 left-5 right-5 bg-gray-900 text-white px-4 py-3 rounded-2xl shadow-2xl transform -translate-y-24 transition-transform duration-300 z-50 flex items-center gap-3">
+        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+            <i class="fas fa-check text-sm"></i>
+        </div>
+        <div>
+            <p class="font-semibold text-sm" id="toast-title">Success!</p>
+            <p class="text-xs text-gray-300" id="toast-message">Action completed</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function showToast(title, message) {
+        const toast = document.getElementById('toast');
+        document.getElementById('toast-title').textContent = title;
+        document.getElementById('toast-message').textContent = message;
+        toast.classList.remove('-translate-y-24');
+        setTimeout(() => {
+            toast.classList.add('-translate-y-24');
+        }, 3000);
+    }
+
+    function showParkingModal() {
+        showToast('Parking Updated', '3 spots now available in rear lot');
+    }
+
+    function preOrder() {
+        showToast('Order Started', 'Your usual Decaf Latte is ready to customize');
+    }
+
+    function reserveSeat() {
+        showToast('Seat Reserved', 'Quiet corner by the plants — 2 hours');
+    }
+
+    function trySugarFree() {
+        showToast('Added to Order', 'Sugar-free Vanilla Decaf Latte');
+    }
+
+    function setActiveTab(btn, tab) {
+        document.querySelectorAll('.bottom-0 button').forEach(b => {
+            b.classList.remove('text-amber-600');
+            b.classList.add('text-gray-400');
+        });
+        if (tab !== 'order') {
+            btn.classList.remove('text-gray-400');
+            btn.classList.add('text-amber-600');
+        }
+        if (tab === 'order') {
+            showToast('Quick Order', 'Opening menu...');
+        }
+    }
+</script>
+
+</body>
+</html>
