@@ -11,6 +11,7 @@ if sys.stdout.encoding.lower() != 'utf-8':
 import asyncio
 import json
 import os
+import time
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -19,6 +20,15 @@ from src.config.columns import OUTPUT_COLUMNS, normalize_input_row
 from src.custom_agents.research_agent import research_lead_row
 from src.custom_agents.demo_agent import build_demo_for_lead
 from src.custom_agents.outreach_agent import write_outreach_email
+from src.deploy.netlify import deploy_demos, get_demo_url
+
+# ═══════════════════════════════════════════════════════════
+# CONCURRENCY SETTINGS
+# ═══════════════════════════════════════════════════════════
+# Max leads to process at the same time.
+# 3 is safe for most APIs. Increase to 5 if you're not hitting rate limits.
+MAX_CONCURRENT = 3
+
 
 def _load_leads_table(path: str) -> pd.DataFrame:
     ext = os.path.splitext(path)[1].lower()
@@ -37,6 +47,88 @@ def _empty_failed_row(business_name: str) -> dict:
     row["Research Status"] = "Failed"
     return row
 
+
+async def _process_single_lead(
+    idx: int,
+    total: int,
+    lead: dict,
+    semaphore: asyncio.Semaphore,
+) -> dict:
+    """
+    Process a single lead through the full pipeline:
+    Research → Demo → Outreach
+    
+    The semaphore limits how many leads run at the same time.
+    """
+    business_name = (lead.get("business_name") or "").strip() or f"Row {idx + 1}"
+    
+    async with semaphore:
+        print(f"\n{'='*60}")
+        print(f"[{idx}/{total}] 🔍 Processing: {business_name}")
+        print(f"{'='*60}")
+        
+        start = time.time()
+        
+        try:
+            # STEP 1: RESEARCH
+            result = await research_lead_row(lead)
+            agent_json = result.get("_raw_agent_json", {})
+            agent_json["business_name"] = business_name
+            
+            demo_url = ""
+            email_copy = ""
+            sheet = _spreadsheet_row(result)
+            sheet["Business Name"] = business_name
+            
+            if agent_json.get("research_status") != "Failed":
+                # STEP 2: DEMO
+                print(f"  [{business_name}] 📱 Building demo...")
+                demo_path = await build_demo_for_lead(business_name, agent_json)
+                
+                if demo_path and not demo_path.startswith("Failed"):
+                    demo_url = get_demo_url(demo_path)
+                else:
+                    demo_url = demo_path or ""
+                
+                # STEP 3: OUTREACH
+                print(f"  [{business_name}] ✉️  Writing outreach...")
+                email_copy = await write_outreach_email(agent_json, demo_url)
+            else:
+                print(f"  [{business_name}] ⚠️  Research failed — skipping demo & outreach")
+            
+            sheet["Demo URL"] = demo_url
+            sheet["Outreach Message"] = email_copy
+            
+            elapsed = time.time() - start
+            status = sheet.get("Research Status", "Unknown")
+            print(f"  [{business_name}] ✅ Done in {elapsed:.0f}s | Status: {status}")
+            
+            return {
+                "success": True,
+                "sheet": sheet,
+                "bundle": {
+                    "business_name": sheet["Business Name"],
+                    "spreadsheet_row": sheet,
+                    "research_agent_json": agent_json,
+                    "maps_scrape": result.get("_maps_json"),
+                },
+            }
+            
+        except Exception as e:
+            elapsed = time.time() - start
+            print(f"  [{business_name}] ❌ Failed after {elapsed:.0f}s: {e}")
+            fail = _empty_failed_row(business_name)
+            return {
+                "success": False,
+                "sheet": fail,
+                "bundle": {
+                    "business_name": business_name,
+                    "spreadsheet_row": fail,
+                    "error": str(e),
+                },
+            }
+
+
 async def _run(args: argparse.Namespace) -> None:
     if not os.path.exists(args.input):
         print(f"Error: {args.input} not found.")
@@ -46,90 +138,74 @@ async def _run(args: argparse.Namespace) -> None:
     if args.limit > 0:
         df = df.head(args.limit)
     
-    rows_for_sheet: list[dict] = []
-    bundle: list[dict] = []
-
-    print(f"Loaded {len(df)} leads from {args.input}")
-
+    total = len(df)
+    concurrency = min(args.concurrency, total)
+    
+    print(f"\n{'='*60}")
+    print(f"🚀 SALES PIPELINE — Processing {total} leads")
+    print(f"   Concurrency: {concurrency} at a time")
+    print(f"{'='*60}")
+    
+    # Prepare all leads
+    leads = []
     for idx, row in df.iterrows():
         raw = {str(k): row[k] for k in row.index}
-        lead = normalize_input_row(raw)
-        business_name = (lead.get("business_name") or "").strip() or f"Row {idx + 1}"
-
-        print(f"\n{'='*60}")
-        print(f"[{idx + 1}/{len(df)}] 🔍 Researching: {business_name}")
-        print(f"{'='*60}")
-
-        try:
-            result = await research_lead_row(lead)
-            
-            # Prepare agent JSON for downstream agents
-            agent_json = result.get("_raw_agent_json", {})
-            
-            # CRITICAL: Ensure business_name is ALWAYS in agent_json
-            # Downstream agents (demo + outreach) need this to personalize output
-            agent_json["business_name"] = business_name
-            
-            demo_path = ""
-            email_copy = ""
-            sheet = _spreadsheet_row(result)
-            sheet["Business Name"] = business_name
-            
-            if agent_json.get("research_status") != "Failed":
-                # RUN DEMO AGENT
-                print(f"\n  📱 Building demo for {business_name}...")
-                demo_path = await build_demo_for_lead(business_name, agent_json)
-                
-                # RUN OUTREACH AGENT
-                print(f"\n  ✉️  Writing outreach for {business_name}...")
-                email_copy = await write_outreach_email(agent_json, demo_path)
-            else:
-                print(f"  ⚠️  Research failed — skipping demo & outreach")
-            
-            sheet["Demo URL"] = demo_path
-            sheet["Outreach Message"] = email_copy
-            
-            rows_for_sheet.append(sheet)
-            bundle.append(
-                {
-                    "business_name": sheet["Business Name"],
-                    "spreadsheet_row": sheet,
-                    "research_agent_json": agent_json,
-                    "maps_scrape": result.get("_maps_json"),
-                }
-            )
-            
-            print(f"\n  ✅ {business_name} complete | Status: {sheet.get('Research Status', 'Unknown')}")
-            
-        except Exception as e:
-            print(f"\n  ❌ [FAIL] {business_name}: {e}")
-            fail = _empty_failed_row(business_name)
+        leads.append(normalize_input_row(raw))
+    
+    # Process with semaphore-controlled concurrency
+    semaphore = asyncio.Semaphore(concurrency)
+    pipeline_start = time.time()
+    
+    tasks = [
+        _process_single_lead(i + 1, total, lead, semaphore)
+        for i, lead in enumerate(leads)
+    ]
+    
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Collect results
+    rows_for_sheet = []
+    bundle = []
+    
+    for r in results:
+        if isinstance(r, Exception):
+            fail = _empty_failed_row("Unknown")
             rows_for_sheet.append(fail)
-            bundle.append(
-                {
-                    "business_name": business_name,
-                    "spreadsheet_row": fail,
-                    "error": str(e),
-                }
-            )
+            bundle.append({"business_name": "Unknown", "spreadsheet_row": fail, "error": str(r)})
+        else:
+            rows_for_sheet.append(r["sheet"])
+            bundle.append(r["bundle"])
+    
+    # Save outputs
+    out_df = pd.DataFrame(rows_for_sheet).reindex(columns=OUTPUT_COLUMNS, fill_value="Not Found")
+    out_df.to_csv(args.output_csv, index=False, encoding="utf-8-sig")
+    out_df.to_excel(args.output_xlsx, index=False)
+    with open(args.output_json, "w", encoding="utf-8") as f:
+        json.dump(bundle, f, indent=2, ensure_ascii=False)
 
-        # Intermediate save
-        out_df = pd.DataFrame(rows_for_sheet).reindex(columns=OUTPUT_COLUMNS, fill_value="Not Found")
-        out_df.to_csv(args.output_csv, index=False, encoding="utf-8-sig")
-        with open(args.output_json, "w", encoding="utf-8") as f:
-            json.dump(bundle, f, indent=2, ensure_ascii=False)
+    # DEPLOY ALL DEMOS TO NETLIFY
+    demo_count = sum(1 for r in rows_for_sheet if r.get("Demo URL", "").startswith("http"))
+    if demo_count > 0:
+        deploy_demos()
+    else:
+        print("\n  ⚠️  No demos to deploy")
 
-    pd.DataFrame(rows_for_sheet).reindex(columns=OUTPUT_COLUMNS, fill_value="Not Found").to_excel(
-        args.output_xlsx,
-        index=False,
-    )
-
+    # FINAL SUMMARY
+    pipeline_elapsed = time.time() - pipeline_start
     ok = sum(1 for r in rows_for_sheet if r.get("Research Status") not in ("Failed",))
-    print(f"\nPipeline complete.")
-    print(f"  CSV:   {args.output_csv}")
-    print(f"  XLSX:  {args.output_xlsx}")
-    print(f"  JSON:  {args.output_json}")
-    print(f"  Completed rows (non-Failed status): {ok}/{len(rows_for_sheet)}")
+    mins = pipeline_elapsed / 60
+    
+    print(f"\n{'='*60}")
+    print(f"🏁 PIPELINE COMPLETE — {mins:.1f} minutes")
+    print(f"{'='*60}")
+    print(f"  📊 CSV:   {args.output_csv}")
+    print(f"  📊 XLSX:  {args.output_xlsx}")
+    print(f"  📊 JSON:  {args.output_json}")
+    print(f"  ✅ Succeeded: {ok}/{total} leads")
+    print(f"  ❌ Failed:    {total - ok}/{total} leads")
+    print(f"  📱 Demos:     {demo_count} deployed")
+    print(f"  🌐 Live at:   https://sales-pipeline-demos.netlify.app")
+    print(f"  ⚡ Speed:     {pipeline_elapsed/total:.1f}s per lead (x{concurrency} concurrent)")
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Lead Research Agent — batch runner")
@@ -138,6 +214,8 @@ def main() -> None:
     p.add_argument("--output-xlsx", default="data/research_output.xlsx")
     p.add_argument("--output-json", default="data/research_results.json")
     p.add_argument("--limit", type=int, default=0, help="Limit number of leads to process")
+    p.add_argument("--concurrency", type=int, default=MAX_CONCURRENT,
+                   help=f"Max leads to process at once (default: {MAX_CONCURRENT})")
     args = p.parse_args()
     asyncio.run(_run(args))
 
